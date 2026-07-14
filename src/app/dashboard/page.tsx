@@ -3,6 +3,42 @@ import Link from "next/link";
 import { CalendarPlus, LogOut } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { logout } from "@/lib/actions/auth";
+import {
+  UpcomingAppointments,
+  type UpcomingAppointment,
+} from "./upcoming-appointments";
+
+async function loadUpcomingAppointments(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  doctorId: string,
+): Promise<UpcomingAppointment[]> {
+  const { data: appointments } = await supabase
+    .from("appointments")
+    .select("id, start_time, end_time, reason, patient_id")
+    .eq("doctor_id", doctorId)
+    .gt("start_time", new Date().toISOString())
+    .order("start_time", { ascending: true })
+    .limit(20);
+
+  if (!appointments || appointments.length === 0) return [];
+
+  const patientIds = [...new Set(appointments.map((a) => a.patient_id))];
+  const { data: patients } = await supabase
+    .from("patients")
+    .select("id, name, phone")
+    .in("id", patientIds);
+
+  const patientById = new Map((patients ?? []).map((p) => [p.id, p]));
+
+  return appointments.map((a) => ({
+    id: a.id,
+    start_time: a.start_time,
+    end_time: a.end_time,
+    reason: a.reason,
+    patientName: patientById.get(a.patient_id)?.name ?? "Paciente",
+    patientPhone: patientById.get(a.patient_id)?.phone ?? "",
+  }));
+}
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -20,6 +56,10 @@ export default async function DashboardPage() {
     .select("name, slug")
     .eq("id", user.id)
     .maybeSingle();
+
+  const upcomingAppointments = doctor
+    ? await loadUpcomingAppointments(supabase, user.id)
+    : [];
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-4 py-12">
@@ -64,6 +104,15 @@ export default async function DashboardPage() {
           </p>
         )}
       </div>
+
+      {doctor && (
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-8 backdrop-blur-sm">
+          <h2 className="mb-4 text-sm font-medium text-gray-300">
+            Próximas citas
+          </h2>
+          <UpcomingAppointments appointments={upcomingAppointments} />
+        </div>
+      )}
     </div>
   );
 }

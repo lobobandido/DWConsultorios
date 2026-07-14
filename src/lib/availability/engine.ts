@@ -78,6 +78,25 @@ function overlaps(slot: Slot, appointment: AppointmentInterval): boolean {
   return slot.start < apptEnd && apptStart < slot.end;
 }
 
+/**
+ * Valida que un instante propuesto como inicio de cita caiga exactamente en
+ * uno de los slots de 30 min generados para su día (L-V, dentro de horario).
+ * Regresa el end_time correspondiente (start + 30 min) si es válido.
+ */
+export function resolveSlot(startISO: string): { end: string } | null {
+  const start = DateTime.fromISO(startISO, { zone: "utc" });
+  if (!start.isValid) return null;
+
+  const businessDate = start.setZone(BUSINESS_TIMEZONE);
+  const dateISO = businessDate.toFormat("yyyy-LL-dd");
+  const slots = generateDaySlots(dateISO);
+
+  const match = slots.find((slot) => slot.start.toMillis() === start.toMillis());
+  if (!match) return null;
+
+  return { end: match.end.toUTC().toISO() as string };
+}
+
 export type SlotAvailability = {
   start: string;
   end: string;

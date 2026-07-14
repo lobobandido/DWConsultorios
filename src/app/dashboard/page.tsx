@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
-import { LogOut } from "lucide-react";
+import Link from "next/link";
+import { CalendarPlus, LogOut } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { logout } from "@/lib/actions/auth";
 
@@ -42,10 +43,19 @@ export default async function DashboardPage() {
 
       <div className="rounded-2xl border border-white/10 bg-white/5 p-8 text-gray-400 backdrop-blur-sm">
         {doctor ? (
-          <p>
-            Calendario en construcción (Paso 3). Slug público:{" "}
-            <span className="font-mono text-teal-400">/{doctor.slug}</span>
-          </p>
+          <div className="flex flex-col gap-4">
+            <p>
+              Vista de calendario en construcción. Slug público:{" "}
+              <span className="font-mono text-teal-400">/{doctor.slug}</span>
+            </p>
+            <Link
+              href="/calendar/new"
+              className="flex w-fit items-center gap-2 rounded-lg bg-gradient-to-r from-teal-600 to-cyan-600 px-4 py-2.5 text-sm font-medium text-white transition-all duration-200 hover:from-teal-700 hover:to-cyan-700"
+            >
+              <CalendarPlus className="h-4 w-4" />
+              Nueva cita
+            </Link>
+          </div>
         ) : (
           <p>
             Tu usuario existe en Supabase Auth pero todavía no tiene una fila

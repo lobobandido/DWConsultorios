@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { generateDaySlots, getAvailability } from "./engine";
+import { generateDaySlots, getAvailability, resolveSlot } from "./engine";
 
 describe("generateDaySlots", () => {
   it("genera 20 slots de 30 min para un día entre semana (08:00-18:00)", () => {
@@ -56,5 +56,24 @@ describe("getAvailability", () => {
 
   it("no genera disponibilidad para fin de semana", () => {
     expect(getAvailability("2026-07-18", [])).toHaveLength(0);
+  });
+});
+
+describe("resolveSlot", () => {
+  it("acepta un inicio de slot válido y regresa su end_time", () => {
+    const result = resolveSlot("2026-07-13T14:00:00.000Z");
+    expect(result).toEqual({ end: "2026-07-13T14:30:00.000Z" });
+  });
+
+  it("rechaza un instante que no cae en el grid de 30 min", () => {
+    expect(resolveSlot("2026-07-13T14:10:00.000Z")).toBeNull();
+  });
+
+  it("rechaza un horario fuera de la ventana de negocio", () => {
+    expect(resolveSlot("2026-07-13T02:00:00.000Z")).toBeNull();
+  });
+
+  it("rechaza fin de semana", () => {
+    expect(resolveSlot("2026-07-18T14:00:00.000Z")).toBeNull();
   });
 });

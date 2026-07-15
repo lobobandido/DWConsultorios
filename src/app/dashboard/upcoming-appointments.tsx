@@ -3,8 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2, X, Check } from "lucide-react";
-
-const BUSINESS_TIMEZONE = "America/Mexico_City";
+import { BUSINESS_TIMEZONE } from "@/lib/availability/constants";
 
 export type UpcomingAppointment = {
   id: string;

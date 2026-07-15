@@ -1,5 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { resolveSlot } from "@/lib/availability/engine";
+import {
+  normalizePhone,
+  validatePatientName,
+  validatePatientPhone,
+  validateReason,
+} from "@/lib/patients/validate-patient-input";
 
 /**
  * Quién origina la solicitud de la cita. La validación de "cita futura
@@ -32,7 +38,23 @@ export type CreateAppointmentResult =
 export async function createAppointment(
   input: CreateAppointmentInput,
 ): Promise<CreateAppointmentResult> {
-  const { supabase, doctorId, start, patientName, patientPhone, reason, source } = input;
+  const { supabase, doctorId, start, patientName, reason, source } = input;
+
+  const nameError = validatePatientName(patientName);
+  if (nameError) {
+    return { ok: false, status: 400, error: nameError };
+  }
+
+  const normalizedPhone = normalizePhone(input.patientPhone);
+  const phoneError = validatePatientPhone(normalizedPhone);
+  if (phoneError) {
+    return { ok: false, status: 400, error: phoneError };
+  }
+
+  const reasonError = validateReason(reason);
+  if (reasonError) {
+    return { ok: false, status: 400, error: reasonError };
+  }
 
   const slot = resolveSlot(start);
   if (!slot) {
@@ -59,7 +81,7 @@ export async function createAppointment(
     .from("patients")
     .select("id")
     .eq("doctor_id", doctorId)
-    .eq("phone", patientPhone)
+    .eq("phone", normalizedPhone)
     .maybeSingle();
 
   if (patientLookupError) {
@@ -71,7 +93,7 @@ export async function createAppointment(
   if (!patientId) {
     const { data: createdPatient, error: createPatientError } = await supabase
       .from("patients")
-      .insert({ doctor_id: doctorId, name: patientName, phone: patientPhone })
+      .insert({ doctor_id: doctorId, name: patientName.trim(), phone: normalizedPhone })
       .select("id")
       .single();
 

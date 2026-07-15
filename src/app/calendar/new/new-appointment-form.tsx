@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { CalendarPlus, Check } from "lucide-react";
-
-const BUSINESS_TIMEZONE = "America/Mexico_City";
+import { BUSINESS_TIMEZONE } from "@/lib/availability/constants";
 
 type SlotAvailability = {
   start: string;

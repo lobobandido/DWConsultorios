@@ -1,14 +1,12 @@
 import { DateTime } from "luxon";
+import {
+  BUSINESS_TIMEZONE,
+  BUSINESS_START_HOUR,
+  BUSINESS_END_HOUR,
+  SLOT_DURATION_MINUTES,
+} from "./constants";
 
-/**
- * Fase 1: horario fijo, no configurable (RF06 / regla de negocio).
- * Zona horaria única para todo el sistema (decisión de producto, no está en
- * los documentos originales).
- */
-export const BUSINESS_TIMEZONE = "America/Mexico_City";
-export const BUSINESS_START_HOUR = 8;
-export const BUSINESS_END_HOUR = 18;
-export const SLOT_DURATION_MINUTES = 30;
+export { BUSINESS_TIMEZONE, BUSINESS_START_HOUR, BUSINESS_END_HOUR, SLOT_DURATION_MINUTES };
 
 export type Slot = {
   start: DateTime;

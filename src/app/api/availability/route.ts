@@ -1,9 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getAvailability, getDayBoundsUTC } from "@/lib/availability/engine";
+import { UUID_PATTERN } from "@/lib/validation/uuid";
 
-const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 export async function GET(request: NextRequest) {

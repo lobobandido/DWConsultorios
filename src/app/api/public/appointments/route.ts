@@ -1,9 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createAppointment } from "@/lib/appointments/create-appointment";
-
-const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+import { UUID_PATTERN } from "@/lib/validation/uuid";
 
 type PublicCreateAppointmentBody = {
   doctorId?: string;

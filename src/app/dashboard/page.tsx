@@ -3,10 +3,12 @@ import Link from "next/link";
 import { CalendarPlus, LogOut } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { logout } from "@/lib/actions/auth";
+import { getBaseUrl } from "@/lib/url";
 import {
   UpcomingAppointments,
   type UpcomingAppointment,
 } from "./upcoming-appointments";
+import { CopyLinkButton } from "./copy-link-button";
 
 async function loadUpcomingAppointments(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -61,6 +63,10 @@ export default async function DashboardPage() {
     ? await loadUpcomingAppointments(supabase, user.id)
     : [];
 
+  const publicBookingUrl = doctor
+    ? `${await getBaseUrl()}/${doctor.slug}`
+    : null;
+
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-4 py-12">
       <div className="flex items-center justify-between">
@@ -84,10 +90,25 @@ export default async function DashboardPage() {
       <div className="rounded-2xl border border-white/10 bg-white/5 p-8 text-gray-400 backdrop-blur-sm">
         {doctor ? (
           <div className="flex flex-col gap-4">
-            <p>
-              Vista de calendario en construcción. Slug público:{" "}
-              <span className="font-mono text-teal-400">/{doctor.slug}</span>
-            </p>
+            <p>Vista de calendario en construcción.</p>
+
+            <div className="flex flex-col gap-1.5">
+              <span className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                Tu enlace público de reservas
+              </span>
+              <div className="flex flex-wrap items-center gap-2">
+                <a
+                  href={publicBookingUrl ?? "#"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-mono text-sm text-teal-400 hover:underline"
+                >
+                  {publicBookingUrl}
+                </a>
+                {publicBookingUrl && <CopyLinkButton url={publicBookingUrl} />}
+              </div>
+            </div>
+
             <Link
               href="/calendar/new"
               className="flex w-fit items-center gap-2 rounded-lg bg-gradient-to-r from-teal-600 to-cyan-600 px-4 py-2.5 text-sm font-medium text-white transition-all duration-200 hover:from-teal-700 hover:to-cyan-700"

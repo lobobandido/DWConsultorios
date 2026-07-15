@@ -2,6 +2,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createAppointment } from "@/lib/appointments/create-appointment";
 import { UUID_PATTERN } from "@/lib/validation/uuid";
+import { checkRateLimit } from "@/lib/rate-limit/check-rate-limit";
+import { getClientIp } from "@/lib/rate-limit/get-client-ip";
 
 type PublicCreateAppointmentBody = {
   doctorId?: string;
@@ -18,6 +20,21 @@ type PublicCreateAppointmentBody = {
  * regla de "sin cita futura duplicada" en createAppointment().
  */
 export async function POST(request: NextRequest) {
+  const supabase = createAdminClient();
+
+  const { allowed } = await checkRateLimit(
+    supabase,
+    `public-appointments:${getClientIp(request)}`,
+    { limit: 5, windowSeconds: 60 },
+  );
+
+  if (!allowed) {
+    return NextResponse.json(
+      { error: "Demasiadas solicitudes, intenta de nuevo en un momento." },
+      { status: 429 },
+    );
+  }
+
   let body: PublicCreateAppointmentBody;
   try {
     body = await request.json();
@@ -40,8 +57,6 @@ export async function POST(request: NextRequest) {
       { status: 400 },
     );
   }
-
-  const supabase = createAdminClient();
 
   const { data: doctor } = await supabase
     .from("doctors")

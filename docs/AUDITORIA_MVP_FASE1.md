@@ -97,4 +97,21 @@ A petición explícita, se implementaron únicamente las mejoras de alta priorid
 
 ### Migración pendiente de correr
 
-`supabase/migrations/0003_normalize_and_constrain_phone.sql` — normaliza los teléfonos ya existentes en `patients` (se detectaron 3 registros reales con espacios) y agrega un `CHECK` que exige 10–15 dígitos hacia adelante, como defensa adicional a nivel de base de datos. Pendiente de correr vía SQL Editor (igual que las migraciones anteriores).
+`supabase/migrations/0003_normalize_and_constrain_phone.sql` — normaliza los teléfonos ya existentes en `patients` (se detectaron 3 registros reales con espacios) y agrega un `CHECK` que exige 10–15 dígitos hacia adelante, como defensa adicional a nivel de base de datos. Corrida por el usuario el 2026-07-15.
+
+## Actualización (2026-07-15): rate limiting
+
+Se implementó el hallazgo crítico de anti-abuso que había quedado pospuesto, a raíz de que el usuario planea compartir el link público con doctores reales próximamente. Rate limiting básico por IP usando Postgres (tabla `rate_limit_hits` + función `increment_rate_limit`, sin servicios externos nuevos):
+
+- `POST /api/public/appointments`: 5 solicitudes / 60s por IP.
+- `GET /api/availability`: 30 solicitudes / 60s por IP.
+
+Verificado con tráfico concurrente real: exactamente 30/10 (permitidas/bloqueadas) en disponibilidad. Es rate limiting de ventana fija, no deslizante — puede dejar pasar 1 solicitud extra justo en el borde entre dos ventanas de tiempo, comportamiento esperado y aceptable para este propósito (no es un límite exacto, es un disuasivo de abuso masivo). Migración: `supabase/migrations/0004_rate_limiting.sql`.
+
+## Adición fuera de alcance original (2026-07-15): expediente básico
+
+Un cliente real (dentista) pidió poder digitalizar el historial clínico que maneja impreso, tomándole fotos. Este ítem no estaba en el documento de requerimientos original (explícitamente listado como "fuera de alcance"). Se acotó a lo mínimo que el cliente pidió: varias fotos por paciente, sin campos estructurados (solo imagen + fecha de subida).
+
+Implementado: `/patients` (lista) y `/patients/[id]` (ficha con galería, subir/eliminar foto), usando Supabase Storage (bucket privado `patient-documents`, límite 10MB, solo imágenes) con políticas RLS por doctor tanto en la tabla `patient_documents` como en `storage.objects`. Migración: `supabase/migrations/0005_patient_documents.sql`.
+
+Durante la implementación se encontró y corrigió un bug real: el código usaba `instanceof File`, pero el global `File` no existe en Node 18 (sí en Node 24, lo que corre Vercel en producción) — se cambió a una validación por forma (duck typing) para no depender de esa diferencia de entorno. Verificado end-to-end: subida, visualización vía signed URL, y eliminación con confirmación.

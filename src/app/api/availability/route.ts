@@ -2,12 +2,29 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getAvailability, getDayBoundsUTC } from "@/lib/availability/engine";
 import { UUID_PATTERN } from "@/lib/validation/uuid";
+import { checkRateLimit } from "@/lib/rate-limit/check-rate-limit";
+import { getClientIp } from "@/lib/rate-limit/get-client-ip";
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 export async function GET(request: NextRequest) {
   const doctorId = request.nextUrl.searchParams.get("doctor_id");
   const date = request.nextUrl.searchParams.get("date");
+
+  const supabase = createAdminClient();
+
+  const { allowed } = await checkRateLimit(
+    supabase,
+    `availability:${getClientIp(request)}`,
+    { limit: 30, windowSeconds: 60 },
+  );
+
+  if (!allowed) {
+    return NextResponse.json(
+      { error: "Demasiadas solicitudes, intenta de nuevo en un momento." },
+      { status: 429 },
+    );
+  }
 
   if (!doctorId || !UUID_PATTERN.test(doctorId)) {
     return NextResponse.json(
@@ -22,8 +39,6 @@ export async function GET(request: NextRequest) {
       { status: 400 },
     );
   }
-
-  const supabase = createAdminClient();
 
   const { data: doctor } = await supabase
     .from("doctors")

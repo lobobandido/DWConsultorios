@@ -4,6 +4,7 @@ import { createAppointment } from "@/lib/appointments/create-appointment";
 import { UUID_PATTERN } from "@/lib/validation/uuid";
 import { checkRateLimit } from "@/lib/rate-limit/check-rate-limit";
 import { getClientIp } from "@/lib/rate-limit/get-client-ip";
+import { notifyDoctorOfNewAppointment } from "@/lib/notifications/notify-doctor";
 
 type PublicCreateAppointmentBody = {
   doctorId?: string;
@@ -80,6 +81,21 @@ export async function POST(request: NextRequest) {
 
   if (!result.ok) {
     return NextResponse.json({ error: result.error }, { status: result.status });
+  }
+
+  try {
+    const { data: authUser } = await supabase.auth.admin.getUserById(doctorId);
+    if (authUser.user?.email) {
+      await notifyDoctorOfNewAppointment({
+        doctorEmail: authUser.user.email,
+        patientName,
+        patientPhone,
+        reason,
+        startISO: result.appointment.start_time,
+      });
+    }
+  } catch {
+    // La cita ya se creó; un fallo al notificar no debe afectar la respuesta.
   }
 
   return NextResponse.json({ appointment: result.appointment }, { status: 201 });

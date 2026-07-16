@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { CalendarPlus, LogOut, Users } from "lucide-react";
+import { Calendar, CalendarPlus, LogOut, Settings, Users } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { logout } from "@/lib/actions/auth";
 import { getBaseUrl } from "@/lib/url";
@@ -76,22 +76,29 @@ export default async function DashboardPage() {
           </h1>
           <p className="text-sm text-gray-400">{user.email}</p>
         </div>
-        <form action={logout}>
-          <button
-            type="submit"
+        <div className="flex items-center gap-2">
+          <Link
+            href="/account"
             className="flex items-center gap-2 rounded-lg border border-gray-700 bg-gray-900/50 px-4 py-2 text-sm font-medium text-gray-300 transition-all duration-200 hover:border-teal-500/50 hover:bg-gray-800 hover:text-white"
           >
-            <LogOut className="h-4 w-4" />
-            Salir
-          </button>
-        </form>
+            <Settings className="h-4 w-4" />
+            Cuenta
+          </Link>
+          <form action={logout}>
+            <button
+              type="submit"
+              className="flex items-center gap-2 rounded-lg border border-gray-700 bg-gray-900/50 px-4 py-2 text-sm font-medium text-gray-300 transition-all duration-200 hover:border-teal-500/50 hover:bg-gray-800 hover:text-white"
+            >
+              <LogOut className="h-4 w-4" />
+              Salir
+            </button>
+          </form>
+        </div>
       </div>
 
       <div className="rounded-2xl border border-white/10 bg-white/5 p-8 text-gray-400 backdrop-blur-sm">
         {doctor ? (
           <div className="flex flex-col gap-4">
-            <p>Vista de calendario en construcción.</p>
-
             <div className="flex flex-col gap-1.5">
               <span className="text-xs font-medium uppercase tracking-wide text-gray-500">
                 Tu enlace público de reservas
@@ -110,6 +117,13 @@ export default async function DashboardPage() {
             </div>
 
             <div className="flex flex-wrap gap-3">
+              <Link
+                href="/calendar"
+                className="flex w-fit items-center gap-2 rounded-lg border border-gray-700 bg-gray-900/50 px-4 py-2.5 text-sm font-medium text-gray-300 transition-all duration-200 hover:border-teal-500/50 hover:text-white"
+              >
+                <Calendar className="h-4 w-4" />
+                Calendario
+              </Link>
               <Link
                 href="/calendar/new"
                 className="flex w-fit items-center gap-2 rounded-lg bg-gradient-to-r from-teal-600 to-cyan-600 px-4 py-2.5 text-sm font-medium text-white transition-all duration-200 hover:from-teal-700 hover:to-cyan-700"

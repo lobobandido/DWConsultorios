@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAppointment } from "@/lib/appointments/create-appointment";
+import { verifySameOrigin } from "@/lib/security/verify-same-origin";
 
 type CreateAppointmentBody = {
   start?: string;
@@ -10,6 +11,10 @@ type CreateAppointmentBody = {
 };
 
 export async function POST(request: NextRequest) {
+  if (!verifySameOrigin(request)) {
+    return NextResponse.json({ error: "Origen no permitido" }, { status: 403 });
+  }
+
   const supabase = await createClient();
 
   const {
